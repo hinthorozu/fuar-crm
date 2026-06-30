@@ -1,3 +1,21 @@
+## v0.2.2 - Authentication Foundation
+
+### Added
+- Added JWT configuration via `backend/.env` (`SECRET_KEY`, `JWT_ALGORITHM`, `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`).
+- Added authentication service layer at `app/services/auth_service.py`.
+- Added auth schemas, dependencies, and router with `POST /auth/login` and `GET /auth/me`.
+- Added admin-oriented dependency helper for future protected admin endpoints.
+
+### Changed
+- Hardened `app/security.py` to load JWT settings from config and reject unsafe secrets.
+- JWT payload now includes `user_id`, `organization_id`, `email`, and `role`.
+- Seed admin handling is idempotent when the admin user already exists.
+- Health check and quality check now validate auth route registration.
+
+### Security
+- Plain passwords are never stored.
+- Invalid credentials return `401`; inactive users return `403`.
+
 ## v0.2.1 - Quality Check Automation
 
 ### Added

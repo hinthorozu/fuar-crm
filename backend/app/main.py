@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from app.database import AUTH_ENABLED
 from app.routers import (
+    auth,
     contacts,
     customer_emails,
     customer_phones,
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
         version=APP_VERSION,
     )
 
+    app.include_router(auth.router)
     app.include_router(dashboard.router)
     app.include_router(fairs.router)
     app.include_router(customers.router)

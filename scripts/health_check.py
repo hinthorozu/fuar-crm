@@ -233,6 +233,8 @@ def main() -> int:
         required_routes = {
             "/",
             "/health-check",
+            "/auth/login",
+            "/auth/me",
             "/dashboard/summary",
             "/customers",
             "/customers/{customer_id}/profile",

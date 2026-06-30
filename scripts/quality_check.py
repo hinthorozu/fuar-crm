@@ -86,6 +86,7 @@ EXPECTED_ROUTER_PREFIXES = {
     "/customer-emails",
     "/notes",
     "/fair-participations",
+    "/auth",
 }
 
 EXPECTED_PROJECT_DIRS = (
@@ -350,6 +351,10 @@ def check_imports(report: QualityReport) -> None:
         "app.routers.notes",
         "app.routers.fairs",
         "app.routers.fair_participations",
+        "app.routers.auth",
+        "app.services.auth_service",
+        "app.dependencies.auth",
+        "app.schemas.auth",
         "app.schemas.customer",
         "app.schemas.dashboard",
     ]

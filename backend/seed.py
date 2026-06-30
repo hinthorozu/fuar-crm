@@ -193,6 +193,17 @@ def ensure_tables() -> None:
 
 
 def seed_auth_foundation(db):
+    existing_admin = db.query(User).filter(User.email == "admin@faircrm.local").first()
+    if existing_admin:
+        if not existing_admin.password_hash:
+            existing_admin.password_hash = hash_password("admin123")
+        if not existing_admin.is_active:
+            existing_admin.is_active = True
+        if not existing_admin.role:
+            existing_admin.role = "super_admin"
+        db.flush()
+        return existing_admin
+
     organization = Organization(
         name="Demo Organization",
         slug="demo",

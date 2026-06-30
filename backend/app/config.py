@@ -27,6 +27,19 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+UNSAFE_JWT_SECRETS = frozenset(
+    {
+        "",
+        "change_me",
+        "change_me_in_env",
+        "changeme",
+        "secret",
+        "your_secret_key_here",
+        "replace_with_a_long_random_secret_key",
+    }
+)
+
+
 @dataclass(frozen=True)
 class AppSettings:
     """Runtime settings for FAIR CRM backend."""
@@ -34,6 +47,9 @@ class AppSettings:
     app_env: str
     app_debug: bool
     auth_enabled: bool
+    secret_key: str
+    jwt_algorithm: str
+    jwt_access_token_expire_minutes: int
     database_url_override: str | None
     db_host: str
     db_port: str
@@ -44,10 +60,19 @@ class AppSettings:
 
     @classmethod
     def from_env(cls) -> "AppSettings":
+        expire_raw = os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30").strip()
+        try:
+            jwt_access_token_expire_minutes = max(1, int(expire_raw))
+        except ValueError:
+            jwt_access_token_expire_minutes = 30
+
         return cls(
             app_env=os.getenv("APP_ENV", "development"),
             app_debug=_env_bool("APP_DEBUG", True),
             auth_enabled=_env_bool("AUTH_ENABLED", False),
+            secret_key=(os.getenv("SECRET_KEY") or "").strip(),
+            jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256").strip() or "HS256",
+            jwt_access_token_expire_minutes=jwt_access_token_expire_minutes,
             database_url_override=os.getenv("DATABASE_URL") or None,
             db_host=os.getenv("DB_HOST", "localhost"),
             db_port=os.getenv("DB_PORT", "3306"),
@@ -56,6 +81,19 @@ class AppSettings:
             db_password=os.getenv("DB_PASSWORD"),
             db_allow_empty_password=_env_bool("DB_ALLOW_EMPTY_PASSWORD", False),
         )
+
+    def ensure_jwt_ready(self) -> None:
+        """Validate JWT settings before issuing or verifying tokens."""
+        if not self.secret_key:
+            raise RuntimeError(
+                "SECRET_KEY is missing. Create backend/.env from backend/.env.example "
+                "and set SECRET_KEY to a long random value."
+            )
+        if self.secret_key.lower() in UNSAFE_JWT_SECRETS or len(self.secret_key) < 16:
+            raise RuntimeError(
+                "SECRET_KEY is missing or unsafe. Set a random SECRET_KEY with at least "
+                "16 characters in backend/.env before using authentication."
+            )
 
     @property
     def database_url(self) -> str:
