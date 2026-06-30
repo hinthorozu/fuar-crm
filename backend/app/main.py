@@ -2,7 +2,10 @@
 
 from fastapi import FastAPI
 
+from app.config import settings
 from app.database import AUTH_ENABLED
+from app.exception_handlers import register_exception_handlers
+from app.logging_config import setup_logging
 from app.routers import (
     auth,
     contacts,
@@ -19,11 +22,15 @@ APP_VERSION = "0.1.9"
 
 
 def create_app() -> FastAPI:
+    setup_logging(settings.app_env, settings.app_debug)
+
     app = FastAPI(
         title="Fair CRM API",
         description="Backend API for fair, customer and participation management.",
         version=APP_VERSION,
     )
+
+    register_exception_handlers(app)
 
     app.include_router(auth.router)
     app.include_router(dashboard.router)

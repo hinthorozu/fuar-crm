@@ -1,29 +1,23 @@
 """Authentication API endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies.auth import bearer_scheme, get_auth_service, get_current_active_user
 from app.models.models import User
-from app.dependencies.auth import get_current_active_user
 from app.schemas.auth import CurrentUserOut, LoginRequest, TokenResponse
-from app.services.auth_service import (
-    InactiveUserError,
-    InvalidCredentialsError,
-    authenticate_user,
-    build_access_token_for_user,
-    resolve_user_role,
-)
+from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-def serialize_current_user(user: User) -> CurrentUserOut:
+def serialize_current_user(user: User, auth_service: AuthService) -> CurrentUserOut:
     return CurrentUserOut(
         id=user.id,
         email=user.email,
         full_name=user.full_name,
-        role=resolve_user_role(user),
+        role=auth_service.resolve_user_role(user),
         organization_id=user.organization_id,
         organization_name=user.organization.name if user.organization else None,
         is_active=user.is_active,
@@ -34,29 +28,22 @@ def serialize_current_user(user: User) -> CurrentUserOut:
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(credentials: LoginRequest, db: Session = Depends(get_db)):
-    try:
-        user = authenticate_user(db, credentials.email, credentials.password)
-        access_token = build_access_token_for_user(user)
-        return TokenResponse(access_token=access_token)
-    except InvalidCredentialsError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(exc),
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-    except InactiveUserError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(exc),
-        ) from exc
-    except RuntimeError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
-        ) from exc
+def login(
+    credentials: LoginRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    user = auth_service.authenticate_user(credentials.email, credentials.password)
+    access_token = auth_service.build_access_token_for_user(user)
+    return TokenResponse(access_token=access_token)
 
 
-@router.get("/me", response_model=CurrentUserOut)
-def read_current_user(current_user: User = Depends(get_current_active_user)):
-    return serialize_current_user(current_user)
+@router.get(
+    "/me",
+    response_model=CurrentUserOut,
+    dependencies=[Depends(bearer_scheme)],
+)
+def read_current_user(
+    current_user: User = Depends(get_current_active_user),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    return serialize_current_user(current_user, auth_service)

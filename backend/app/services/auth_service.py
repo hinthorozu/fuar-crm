@@ -2,81 +2,86 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from sqlalchemy.orm import Session
 
-from sqlalchemy.orm import Session, joinedload
-
+from app.exceptions.base import (
+    AuthenticationError,
+    InactiveUserError,
+    InvalidCredentialsError,
+    NotFoundError,
+    ServiceUnavailableError,
+)
+from app.logging_config import get_logger
 from app.models.models import User
+from app.repositories.user_repository import UserRepository
 from app.security import create_access_token, decode_access_token, verify_password
 
-
-class InvalidCredentialsError(Exception):
-    """Raised when email/password authentication fails."""
+logger = get_logger(__name__)
 
 
-class InactiveUserError(Exception):
-    """Raised when an authenticated user account is inactive."""
+class AuthService:
+    """Authentication and current-user resolution."""
+
+    def __init__(self, db: Session) -> None:
+        self.user_repository = UserRepository(db)
+
+    @staticmethod
+    def resolve_user_role(user: User) -> str:
+        if user.role_ref is not None and user.role_ref.name:
+            return user.role_ref.name
+        return user.role
+
+    def authenticate_user(self, email: str, password: str) -> User:
+        """Authenticate a user by email and password."""
+        user = self.user_repository.find_by_email(email)
+
+        if user is None or not verify_password(password, user.password_hash):
+            logger.warning("Failed login attempt for email=%s", UserRepository.normalize_email(email))
+            raise InvalidCredentialsError()
+
+        if not user.is_active:
+            logger.warning("Inactive user login attempt for user_id=%s", user.id)
+            raise InactiveUserError()
+
+        updated_user = self.user_repository.update_last_login(user)
+        logger.info("Successful login for user_id=%s", updated_user.id)
+        return updated_user
+
+    def build_access_token_for_user(self, user: User) -> str:
+        """Create a JWT access token for an authenticated user."""
+        claims = {
+            "sub": str(user.id),
+            "user_id": user.id,
+            "organization_id": user.organization_id,
+            "email": user.email,
+            "role": self.resolve_user_role(user),
+            "type": "access",
+        }
+        try:
+            return create_access_token(claims)
+        except RuntimeError as exc:
+            raise ServiceUnavailableError(str(exc)) from exc
+
+    def get_user_from_token(self, token: str) -> User:
+        """Load the authenticated user referenced by a JWT access token."""
+        try:
+            payload = decode_access_token(token)
+        except ValueError as exc:
+            raise AuthenticationError(str(exc)) from exc
+        except RuntimeError as exc:
+            raise ServiceUnavailableError(str(exc)) from exc
+
+        user_id = payload.get("user_id") or payload.get("sub")
+        if user_id is None:
+            raise AuthenticationError("Token payload is missing user_id.")
+
+        user = self.user_repository.find_by_id(int(user_id))
+        if user is None:
+            raise NotFoundError("User not found.")
+
+        return user
 
 
-def normalize_email(email: str) -> str:
-    return email.strip().lower()
-
-
-def resolve_user_role(user: User) -> str:
-    if user.role_ref is not None and user.role_ref.name:
-        return user.role_ref.name
-    return user.role
-
-
-def authenticate_user(db: Session, email: str, password: str) -> User:
-    """Authenticate a user by email and password."""
-    normalized_email = normalize_email(email)
-    user = (
-        db.query(User)
-        .options(joinedload(User.role_ref), joinedload(User.organization))
-        .filter(User.email == normalized_email)
-        .first()
-    )
-
-    if user is None or not verify_password(password, user.password_hash):
-        raise InvalidCredentialsError("Invalid email or password.")
-
-    if not user.is_active:
-        raise InactiveUserError("User account is inactive.")
-
-    user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-def build_access_token_for_user(user: User) -> str:
-    """Create a JWT access token for an authenticated user."""
-    claims = {
-        "sub": str(user.id),
-        "user_id": user.id,
-        "organization_id": user.organization_id,
-        "email": user.email,
-        "role": resolve_user_role(user),
-        "type": "access",
-    }
-    return create_access_token(claims)
-
-
-def get_user_from_token(db: Session, token: str) -> User:
-    """Load the authenticated user referenced by a JWT access token."""
-    payload = decode_access_token(token)
-    user_id = payload.get("user_id") or payload.get("sub")
-    if user_id is None:
-        raise ValueError("Token payload is missing user_id.")
-
-    user = (
-        db.query(User)
-        .options(joinedload(User.role_ref), joinedload(User.organization))
-        .filter(User.id == int(user_id))
-        .first()
-    )
-    if user is None:
-        raise ValueError("User not found.")
-
-    return user
+def get_auth_service(db: Session) -> AuthService:
+    """Factory helper for auth service construction."""
+    return AuthService(db)

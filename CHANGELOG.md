@@ -1,3 +1,17 @@
+## v0.2.3 - Repository Layer & API Foundation
+
+### Added
+- Added repository package with `BaseRepository` and `UserRepository`.
+- Added centralized application exceptions and FastAPI exception handlers.
+- Added standard API response models (`ApiResponse`, `ApiErrorResponse`).
+- Added centralized logging configuration with INFO/WARNING/ERROR support.
+
+### Changed
+- Refactored authentication flow to use `AuthService` + `UserRepository`.
+- Moved user database queries out of the auth service into the repository layer.
+- Auth dependencies now raise application exceptions instead of inline HTTP errors.
+- Health and quality checks remain aligned with the expanded backend structure.
+
 ## v0.2.2 - Authentication Foundation
 
 ### Added
