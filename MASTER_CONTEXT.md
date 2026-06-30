@@ -84,3 +84,28 @@ The health check is the local readiness gate for FAIR CRM. It verifies environme
 7. Dashboard & Reports
 8. Communication (WhatsApp / Email)
 9. Production Hardening
+
+
+## Authentication & SaaS Design Rules
+- FAIR CRM is designed as a future SaaS product.
+- Backend/database/API naming remains English.
+- Frontend labels/messages remain Turkish.
+- The system starts as single-tenant in practice, but database design must allow future multi-tenant SaaS expansion.
+- The tenant concept is named `organization`.
+- Authentication uses email + password.
+- Passwords are stored only as secure hashes.
+- JWT access tokens are used for API authentication.
+- Access token target lifetime: 30 minutes.
+- Refresh token target lifetime: 30 days, to be added after initial login flow.
+- Authorization follows role-based access control with future permission support.
+- Initial roles:
+  - super_admin
+  - admin
+  - manager
+  - sales
+  - viewer
+- JWT payload should include:
+  - user_id
+  - organization_id
+  - email
+  - role

@@ -1,3 +1,14 @@
+## v0.2.0 - Auth Foundation
+
+### Added
+- Added authentication design decisions for future SaaS support.
+- Added JWT/security helper foundation.
+- Added password hashing and verification helpers.
+
+### Technical Decisions
+- Tenant concept will be named `organization`.
+- Login will use email + password.
+- Authorization will start with RBAC and remain permission-ready.
 
 ## v0.1.10
 - Added development check workflow.

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from jose import jwt
 from passlib.context import CryptContext
-
+python scripts/dev_check.py
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
