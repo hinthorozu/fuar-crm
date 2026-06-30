@@ -30,10 +30,15 @@ from app.models.models import (
     ImportBatch,
     ImportRow,
     Note,
+    Organization,
+    Permission,
+    Role,
+    RolePermission,
     ScraperRun,
     ScraperSource,
     User,
 )
+from app.security import hash_password
 from app.utils.normalization import (
     normalize_company_name,
     normalize_email,
@@ -43,6 +48,20 @@ from app.utils.normalization import (
 )
 
 SEED_RANDOM = 42
+
+PERMISSIONS = [
+    ("customer.read", "Read customer records"),
+    ("customer.create", "Create customer records"),
+    ("customer.update", "Update customer records"),
+    ("customer.delete", "Delete customer records"),
+    ("fair.read", "Read fair records"),
+    ("fair.create", "Create fair records"),
+    ("fair.update", "Update fair records"),
+    ("fair.delete", "Delete fair records"),
+    ("import.run", "Run import previews and imports"),
+    ("scraper.run", "Run scraper jobs"),
+    ("user.manage", "Manage users and roles"),
+]
 
 FAIRS = [
     {
@@ -160,6 +179,10 @@ def reset_database(db) -> None:
         Customer,
         Fair,
         User,
+        RolePermission,
+        Permission,
+        Role,
+        Organization,
     ]:
         db.query(model).delete()
     db.commit()
@@ -169,12 +192,41 @@ def ensure_tables() -> None:
     Base.metadata.create_all(bind=engine)
 
 
-def seed_users(db):
+def seed_auth_foundation(db):
+    organization = Organization(
+        name="Demo Organization",
+        slug="demo",
+        is_active=True,
+    )
+    db.add(organization)
+    db.flush()
+
+    super_admin_role = Role(
+        organization_id=organization.id,
+        name="super_admin",
+        description="Full system access for the demo organization.",
+        is_active=True,
+    )
+    db.add(super_admin_role)
+    db.flush()
+
+    seeded_permissions = []
+    for code, description in PERMISSIONS:
+        permission = Permission(code=code, description=description)
+        db.add(permission)
+        seeded_permissions.append(permission)
+    db.flush()
+
+    for permission in seeded_permissions:
+        db.add(RolePermission(role_id=super_admin_role.id, permission_id=permission.id))
+
     admin = User(
+        organization_id=organization.id,
+        role_id=super_admin_role.id,
         full_name="FAIR CRM Admin",
         email="admin@faircrm.local",
-        password_hash="development-only-password-hash",
-        role="admin",
+        password_hash=hash_password("admin123"),
+        role="super_admin",
         is_active=True,
     )
     db.add(admin)
@@ -366,7 +418,7 @@ def seed_import_preview_samples(db, fairs, customers):
 
 
 def print_summary(db) -> None:
-    models = [Customer, Contact, CustomerPhone, CustomerEmail, Fair, FairParticipation, Note, ImportBatch, ImportRow]
+    models = [Organization, Role, Permission, User, Customer, Contact, CustomerPhone, CustomerEmail, Fair, FairParticipation, Note, ImportBatch, ImportRow]
     print("\nSeed summary")
     print("============")
     for model in models:
@@ -397,7 +449,7 @@ def main() -> None:
             reset_database(db)
 
         print("Creating seed data...")
-        admin = seed_users(db)
+        admin = seed_auth_foundation(db)
         fairs = seed_fairs(db)
         customers = seed_customers(db)
         seed_contacts_channels_notes(db, customers, admin)

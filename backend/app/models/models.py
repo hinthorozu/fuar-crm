@@ -48,17 +48,100 @@ class JSONEncodedText(TypeDecorator):
             return value
 
 
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(150), nullable=False)
+    slug = Column(String(100), nullable=False, unique=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    users = relationship("User", back_populates="organization")
+    roles = relationship("Role", back_populates="organization", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("idx_organizations_slug", "slug"),
+    )
+
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    name = Column(String(50), nullable=False)
+    description = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    organization = relationship("Organization", back_populates="roles")
+    users = relationship("User", back_populates="role_ref")
+    permissions = relationship("RolePermission", back_populates="role", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        UniqueConstraint("organization_id", "name", name="unique_role_per_organization"),
+        Index("idx_roles_organization_id", "organization_id"),
+        Index("idx_roles_name", "name"),
+    )
+
+
+class Permission(Base):
+    __tablename__ = "permissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(100), nullable=False, unique=True)
+    description = Column(String(255), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    roles = relationship("RolePermission", back_populates="permission", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("idx_permissions_code", "code"),
+    )
+
+
+class RolePermission(Base):
+    __tablename__ = "role_permissions"
+
+    role_id = Column(Integer, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
+    permission_id = Column(Integer, ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    role = relationship("Role", back_populates="permissions")
+    permission = relationship("Permission", back_populates="roles")
+
+    __table_args__ = (
+        Index("idx_role_permissions_role_id", "role_id"),
+        Index("idx_role_permissions_permission_id", "permission_id"),
+    )
+
+
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
+    role_id = Column(Integer, ForeignKey("roles.id", ondelete="SET NULL"), nullable=True)
     full_name = Column(String(150), nullable=False)
     email = Column(String(150), nullable=False, unique=True)
     password_hash = Column(String(255), nullable=False)
-    role = Column(String(50), nullable=False, default="admin")
+    role = Column(String(50), nullable=False, default="admin")  # Legacy role label; keep until RBAC migration is complete.
     is_active = Column(Boolean, default=True, nullable=False)
+    last_login_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    organization = relationship("Organization", back_populates="users")
+    role_ref = relationship("Role", back_populates="users")
+
+    __table_args__ = (
+        Index("idx_users_organization_id", "organization_id"),
+        Index("idx_users_role_id", "role_id"),
+        Index("idx_users_email", "email"),
+    )
 
 
 class Customer(Base):

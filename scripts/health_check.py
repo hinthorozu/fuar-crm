@@ -153,6 +153,10 @@ def main() -> int:
             inspector = inspect(engine)
             existing_tables = set(inspector.get_table_names())
             expected_tables = {
+                "organizations",
+                "roles",
+                "permissions",
+                "role_permissions",
                 "users",
                 "customers",
                 "contacts",
@@ -176,6 +180,11 @@ def main() -> int:
             )
 
             seed_tables = [
+                "organizations",
+                "roles",
+                "permissions",
+                "role_permissions",
+                "users",
                 "customers",
                 "contacts",
                 "customer_phones",
