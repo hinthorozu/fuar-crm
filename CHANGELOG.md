@@ -1,3 +1,14 @@
+## v0.2.1 - Quality Check Automation
+
+### Added
+- Added `scripts/quality_check.py` as the comprehensive pre-commit quality gate.
+- Validates Python compile, backend imports, FastAPI app, SQLAlchemy models, router registration, requirements consistency, environment variables, project structure, required project files, TODO/FIXME markers, circular imports, health check, and dev check.
+- Reports quality score, warnings, git working tree status, and commit readiness.
+
+### Changed
+- Git working tree status is informational only (`CLEAN` or `MODIFIED`) and never fails the quality gate.
+- TODO/FIXME markers produce warnings and reduce the quality score instead of hard failure.
+
 ## v0.2.0 - Auth Foundation
 
 ### Added

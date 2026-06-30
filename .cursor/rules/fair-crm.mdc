@@ -1,0 +1,318 @@
+# FAIR CRM AI Development Rules
+
+## Project Identity
+
+You are working on FAIR CRM.
+
+This is a commercial SaaS CRM product for exhibition and fair management.
+
+Never treat this project as a demo or tutorial.
+
+Always think like a senior software engineer.
+
+---
+
+## General Rules
+
+Before changing any code always read:
+
+- MASTER_CONTEXT.md
+- README.md
+- CHANGELOG.md
+
+Never start coding before understanding the current architecture.
+
+---
+
+## Architecture Rules
+
+Never redesign the architecture.
+
+Always improve the existing architecture.
+
+Keep changes small and incremental.
+
+Avoid unnecessary abstractions.
+
+Prefer consistency over cleverness.
+
+---
+
+## Naming Rules
+
+Backend:
+- English only
+
+Database:
+- English only
+
+API:
+- English only
+
+Frontend:
+- Turkish
+
+---
+
+## Documentation Rules
+
+If architecture changes:
+
+Update:
+
+- CHANGELOG.md
+
+If project decisions change:
+
+Update:
+
+- MASTER_CONTEXT.md
+
+Never ignore project documentation.
+
+---
+
+## Git Rules
+
+Never rewrite git history.
+
+Never delete existing commits.
+
+Prefer atomic commits.
+
+Never modify multiple independent features in one commit.
+
+---
+
+## Health Rules
+
+Never break:
+
+- scripts/health_check.py
+
+Never break:
+
+- scripts/dev_check.py
+
+If a new module is added,
+update health checks if necessary.
+
+---
+
+## Database Rules
+
+Never delete tables.
+
+Never rename existing tables.
+
+Never drop columns without approval.
+
+Prefer backward compatible schema changes.
+
+---
+
+## API Rules
+
+Never rename public endpoints.
+
+Keep existing response formats compatible.
+
+Use REST naming conventions.
+
+---
+
+## Coding Rules
+
+Follow existing coding style.
+
+Reuse existing helpers.
+
+Avoid duplicate code.
+
+Avoid magic values.
+
+Keep functions small.
+
+---
+
+## Authentication Rules
+
+Authentication:
+
+JWT
+
+Login:
+
+Email + Password
+
+Authorization:
+
+RBAC
+
+Future SaaS tenant:
+
+organization
+
+Never hardcode secrets.
+
+Always use config.py and .env.
+
+---
+
+## CRM Rules
+
+Customer data is the core entity.
+
+Never break duplicate detection logic.
+
+Never remove normalization.
+
+Always preserve Turkish normalization.
+
+---
+
+## Import Rules
+
+The Import Engine is one of the most important modules.
+
+Never simplify it.
+
+Workflow:
+
+Upload
+
+↓
+
+Preview
+
+↓
+
+Validation
+
+↓
+
+Normalization
+
+↓
+
+Duplicate Detection
+
+↓
+
+Merge
+
+↓
+
+Import
+
+↓
+
+Audit
+
+---
+
+## Scraper Rules
+
+Scraper output must never write directly into customers.
+
+Always go through Import Engine.
+
+---
+
+## Quality Rules
+
+Before considering work finished verify:
+
+health_check.py
+
+dev_check.py
+
+If available:
+
+quality_check.py
+
+---
+
+## Development Workflow
+
+Always follow:
+
+Analyze
+
+↓
+
+Plan
+
+↓
+
+Implement
+
+↓
+
+Validate
+
+↓
+
+Review
+
+↓
+
+Commit
+
+Never skip analysis.
+
+---
+
+## If unsure
+
+Never guess.
+
+Inspect existing code first.
+
+Follow project conventions.
+
+When there are multiple options,
+choose the one with the smallest architectural impact.
+
+## Sprint Rules
+
+Before every implementation always produce:
+
+- Current Version
+- Target Version
+- Files To Modify
+- Database Impact
+- API Impact
+- Frontend Impact
+- Documentation Impact
+- Migration Plan
+- Rollback Plan
+- Validation Plan
+
+Never start coding before presenting this report.
+
+---
+
+Every completed sprint MUST update:
+
+- CHANGELOG.md
+- FAIR_CRM_PROJECT.xlsx
+
+If architecture changes:
+
+- MASTER_CONTEXT.md
+
+---
+
+Before requesting commit always verify:
+
+python scripts/dev_check.py
+
+python scripts/health_check.py
+
+python scripts/quality_check.py
+
+If any validation fails,
+continue fixing until all validations pass.
+
+Never ask the user to commit before validations pass.
