@@ -1,0 +1,3 @@
+# FAIR CRM docker-compose placeholder.
+# Deployment configuration will be finalized in a later release.
+services: {}

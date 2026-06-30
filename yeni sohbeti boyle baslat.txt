@@ -1,0 +1,23 @@
+Yeni sohbette sadece şu mesajı yazman yeterli:
+
+FAIR CRM v0.1 Development. Önce MASTER_CONTEXT.md, sonra docs/, ardından güncel proje ZIP'ini incele. Mevcut mimariyi referans alarak devam edelim. Büyük mimari değişiklik önermeden önce mevcut yapıyı kullan.
+
+Sonra şu üç dosyayı yükle:
+
+📄 MASTER_CONTEXT.md
+📁 docs.zip
+📦 fuar-crm.zip
+
+Ve doğrudan işe başlayalım.
+
+Bu arada küçük bir not bırakayım. Bence bundan sonra hedefimiz şu olmalı:
+
+v0 → Foundation ✅
+v0.1 → Kullanılabilir CRM
+v0.2 → Smart Import Engine
+v0.3 → Scraper Framework
+v1.0 → İlk ticari sürüm
+
+Artık "altyapı" değil, "ürün" geliştiriyoruz.
+
+İyi dinlen, yeni sohbette FAIR CRM v0.1 ile devam ederiz
