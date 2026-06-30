@@ -141,3 +141,12 @@ FAIR_CRM_PROJECT.xlsx
 ```
 
 Root Markdown files are intentionally limited to `README.md`, `MASTER_CONTEXT.md` and `CHANGELOG.md`.
+
+
+## Development Check
+
+Run before every commit:
+
+```bash
+python scripts/dev_check.py
+```

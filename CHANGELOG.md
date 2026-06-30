@@ -1,3 +1,9 @@
+
+## v0.1.10
+- Added development check workflow.
+- Health check route validation stabilized.
+- Project marked as SYSTEM READY.
+
 # CHANGELOG
 
 ## v0.1.9 - Route registration health-check fix

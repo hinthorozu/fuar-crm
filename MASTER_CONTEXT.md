@@ -59,3 +59,28 @@ python scripts/health_check.py
 ```
 
 The health check is the local readiness gate for FAIR CRM. It verifies environment variables, database connectivity, required tables, seed counts, FastAPI importability, key routes and the Excel project hub.
+
+
+---
+
+# Development Rules
+
+- GitHub `main` is the single source of truth.
+- Do not introduce major architectural changes; improve the existing structure.
+- Every completed feature must pass:
+  - `python scripts/dev_check.py`
+  - `python scripts/health_check.py`
+- Keep backend naming in English and frontend labels in Turkish.
+- Update CHANGELOG.md and FAIR_CRM_PROJECT.xlsx after each completed feature.
+
+# High-Level Roadmap
+
+1. Authentication & Users
+2. Customer Management
+3. Fair & Participation Management
+4. Excel Import Engine
+5. Duplicate Detection & Merge
+6. Scraper Framework
+7. Dashboard & Reports
+8. Communication (WhatsApp / Email)
+9. Production Hardening
